@@ -422,3 +422,19 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# Production (Supabase Cloud). Overrides the local values above when running
+# `supabase config push` against this project. Custom SMTP is configured in the
+# dashboard; enable it here too before pushing again, or a push will disable it.
+[remotes.production]
+project_id = "mgagevevcmkpopaoglrs"
+
+[remotes.production.auth]
+site_url = "https://filipino-fill.vercel.app"
+additional_redirect_urls = ["https://filipino-fill.vercel.app"]
+
+[remotes.production.auth.email]
+# Accounts count as registered only once the emailed code is verified.
+enable_confirmations = true
+# Throttle code emails in production (the app's resend cooldown matches).
+max_frequency = "60s"

@@ -13,7 +13,7 @@ import { getSupabase } from "@/lib/supabase"
 
 const emailSchema = z.email("Enter a valid email address").max(320)
 const OTP_LENGTH = 6
-const RESEND_COOLDOWN_S = 30
+const RESEND_COOLDOWN_S = 60
 
 interface EmailOtpFlowProps {
   /** Called once Supabase confirms the code; the user is now signed in and verified. */
