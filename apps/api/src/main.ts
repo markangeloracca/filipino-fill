@@ -29,8 +29,4 @@ async function bootstrap(): Promise<void> {
   new Logger('Bootstrap').log(`API listening on http://localhost:${port}/api`);
 }
 
-// CommonJS entry (Vercel's NestJS runtime loads main.js as CJS): no top-level await.
-bootstrap().catch((err: unknown) => {
-  new Logger('Bootstrap').error(err instanceof Error ? (err.stack ?? err.message) : String(err));
-  process.exit(1);
-});
+await bootstrap();
