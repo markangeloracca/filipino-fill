@@ -1,0 +1,7 @@
+# Local build artefacts; Vercel builds from source.
+**/node_modules
+**/.next
+apps/api/dist
+.vercel
+supabase/.temp
+supabase/.branches
