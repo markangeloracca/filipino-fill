@@ -29,4 +29,9 @@ async function bootstrap(): Promise<void> {
   new Logger('Bootstrap').log(`API listening on http://localhost:${port}/api`);
 }
 
-await bootstrap();
+// No top-level await: Vercel's runtime intercepts listen() and waits for this module to
+// finish evaluating, so awaiting bootstrap() here would deadlock the function.
+bootstrap().catch((err: unknown) => {
+  new Logger('Bootstrap').error(err instanceof Error ? (err.stack ?? err.message) : String(err));
+  process.exit(1);
+});
