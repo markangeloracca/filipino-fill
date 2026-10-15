@@ -1,0 +1,18 @@
+{
+  "name": "filipino-fill",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:seed:generate": "node scripts/generate-seed.mjs",
+    "dev:api": "npm run start:dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "dev": "concurrently -n api,web -c blue,magenta \"npm:dev:api\" \"npm:dev:web\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "supabase": "^2.0.0"
+  }
+}
