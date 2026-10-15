@@ -67,6 +67,8 @@ interface EstablishmentMapProps {
   theme: MapTheme
   onSelect: (id: string) => void
   onHighlight?: (id: string | null) => void
+  /** Whether the floating search panel covers the map's top-left; camera moves keep pins clear of it. */
+  panelOpen: boolean
 }
 
 function toFeatureCollection(items: EstablishmentSummary[]): FeatureCollection<Point> {
@@ -99,9 +101,10 @@ function outsideMask(boundary: BoundaryCollection): Feature<Polygon> {
 }
 
 /** The panel overlays the map on wide screens; keep fitted results out from under it. */
-function fitPadding(): { top: number; bottom: number; left: number; right: number } {
+function fitPadding(panelOpen: boolean): { top: number; bottom: number; left: number; right: number } {
   const wide = typeof window !== "undefined" && window.innerWidth >= 768
-  return wide ? { top: 96, bottom: 64, left: 460, right: 80 } : { top: 260, bottom: 48, left: 40, right: 40 }
+  if (wide) return { top: 96, bottom: 64, left: panelOpen ? 460 : 80, right: 80 }
+  return { top: panelOpen ? 310 : 88, bottom: 48, left: 40, right: 40 }
 }
 
 function createPinElement(e: EstablishmentSummary, index: number, onSelect: (id: string) => void, onHighlight?: (id: string | null) => void) {
@@ -130,7 +133,7 @@ function createPinElement(e: EstablishmentSummary, index: number, onSelect: (id:
   return el
 }
 
-export function EstablishmentMap({ all, results, highlightedId, focusedId, theme, onSelect, onHighlight }: EstablishmentMapProps) {
+export function EstablishmentMap({ all, results, highlightedId, focusedId, theme, onSelect, onHighlight, panelOpen }: EstablishmentMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibre | null>(null)
   const markersRef = useRef(new Map<string, Marker>())
@@ -139,6 +142,7 @@ export function EstablishmentMap({ all, results, highlightedId, focusedId, theme
   const allRef = useRef(all)
   const searchActiveRef = useRef(results !== null)
   const themeRef = useRef(theme)
+  const panelOpenRef = useRef(panelOpen)
   const boundaryRef = useRef<BoundaryCollection | null>(null)
   const appliedStyleRef = useRef<string | null>(null)
   const applyDimRef = useRef<(() => void) | null>(null)
@@ -147,6 +151,7 @@ export function EstablishmentMap({ all, results, highlightedId, focusedId, theme
   useEffect(() => {
     onSelectRef.current = onSelect
     onHighlightRef.current = onHighlight
+    panelOpenRef.current = panelOpen
   })
 
   // --- init ----------------------------------------------------------------
@@ -157,7 +162,7 @@ export function EstablishmentMap({ all, results, highlightedId, focusedId, theme
       container: containerRef.current,
       style: initialStyle,
       bounds: CALGARY_BOUNDS,
-      fitBoundsOptions: { padding: fitPadding() },
+      fitBoundsOptions: { padding: fitPadding(panelOpenRef.current) },
       minZoom: 8.5,
       maxZoom: 18,
       maxBounds: [
@@ -320,11 +325,11 @@ export function EstablishmentMap({ all, results, highlightedId, focusedId, theme
     })
 
     if (results.length === 1) {
-      map.flyTo({ center: [results[0].longitude, results[0].latitude], zoom: 14, padding: fitPadding(), duration: 900 })
+      map.flyTo({ center: [results[0].longitude, results[0].latitude], zoom: 14, padding: fitPadding(panelOpenRef.current), duration: 900 })
     } else {
       const bounds = new LngLatBounds()
       results.forEach((e) => bounds.extend([e.longitude, e.latitude]))
-      map.fitBounds(bounds, { padding: fitPadding(), maxZoom: 14, duration: 900 })
+      map.fitBounds(bounds, { padding: fitPadding(panelOpenRef.current), maxZoom: 14, duration: 900 })
     }
   }, [results, ready])
 
@@ -343,7 +348,7 @@ export function EstablishmentMap({ all, results, highlightedId, focusedId, theme
     const map = mapRef.current
     if (!ready || !map || !focusedId) return
     const target = all.find((e) => e.id === focusedId) ?? results?.find((e) => e.id === focusedId)
-    if (target) map.easeTo({ center: [target.longitude, target.latitude], zoom: Math.max(map.getZoom(), 13.5), padding: fitPadding(), duration: 700 })
+    if (target) map.easeTo({ center: [target.longitude, target.latitude], zoom: Math.max(map.getZoom(), 13.5), padding: fitPadding(panelOpenRef.current), duration: 700 })
   }, [focusedId, ready, all, results])
 
   const colors = MAP_THEME[theme]

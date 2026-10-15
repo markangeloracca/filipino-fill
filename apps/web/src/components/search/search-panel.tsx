@@ -1,8 +1,8 @@
 "use client"
 
 import { AnimatePresence, motion } from "framer-motion"
-import { AlertCircle, MapPinned, Search, SearchX, Star, X } from "lucide-react"
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react"
+import { AlertCircle, ChevronLeft, MapPinned, Search, SearchX, Star, X } from "lucide-react"
+import { useId, useRef, useState, type KeyboardEvent, type RefObject } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CATEGORY_META, SEARCH_SUGGESTIONS } from "@/lib/categories"
 import { cn } from "@/lib/utils"
@@ -21,11 +21,14 @@ interface SearchPanelProps {
   highlightedId: string | null
   onHighlight: (id: string | null) => void
   onSelect: (id: string) => void
+  /** Owned by the dashboard so the sidebar and the "/" shortcut can focus the input. */
+  inputRef: RefObject<HTMLInputElement | null>
+  onCollapse: () => void
+  panelId: string
 }
 
 export function SearchPanel(props: SearchPanelProps) {
-  const { query, onQueryChange, category, onCategoryChange, results, loading, error, onRetry, totalCount, highlightedId, onHighlight, onSelect } = props
-  const inputRef = useRef<HTMLInputElement>(null)
+  const { query, onQueryChange, category, onCategoryChange, results, loading, error, onRetry, totalCount, highlightedId, onHighlight, onSelect, inputRef, onCollapse, panelId } = props
   const listRef = useRef<HTMLUListElement>(null)
   const [activeState, setActiveState] = useState<{ results: EstablishmentSummary[] | null; index: number }>({ results: null, index: -1 })
   // A new result list resets keyboard focus without an effect.
@@ -33,19 +36,6 @@ export function SearchPanel(props: SearchPanelProps) {
   const listId = useId()
   const statusId = useId()
   const active = query.trim().length > 0 || category !== null
-
-  // "/" focuses search from anywhere (unless typing in a field).
-  useEffect(() => {
-    function onKey(e: globalThis.KeyboardEvent) {
-      const target = e.target as HTMLElement | null
-      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !(target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)))) {
-        e.preventDefault()
-        inputRef.current?.focus()
-      }
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [])
 
   function moveActive(next: number) {
     if (!results?.length) return
@@ -75,15 +65,26 @@ export function SearchPanel(props: SearchPanelProps) {
 
   return (
     <section
+      id={panelId}
       aria-label="Search Filipino establishments"
       className="pointer-events-auto flex max-h-[60dvh] w-full md:max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_1px_2px_0_rgb(0_0_0/0.05),0_8px_24px_-6px_rgb(0_0_0/0.12)] backdrop-blur-md md:w-[400px]"
     >
-      <header className="flex items-center gap-3 px-5 pt-5 pb-4">
-        <BrandMark />
-        <div className="min-w-0">
+      <header className="flex items-center gap-3 pt-5 pr-3 pb-4 pl-5">
+        <div className="min-w-0 flex-1">
           <h1 className="text-[clamp(1.05rem,1rem+0.3vw,1.2rem)] leading-tight font-semibold tracking-tight text-foreground">Filipino Fill</h1>
           <p className="text-xs text-muted-foreground">Filipino food, shops &amp; services in Calgary</p>
         </div>
+        <button
+          type="button"
+          onClick={onCollapse}
+          aria-controls={panelId}
+          aria-expanded
+          aria-label="Hide search panel"
+          title="Hide search panel"
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none active:scale-95"
+        >
+          <ChevronLeft className="size-5" aria-hidden />
+        </button>
       </header>
 
       <div className="px-4">
